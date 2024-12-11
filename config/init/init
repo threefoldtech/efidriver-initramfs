@@ -1,0 +1,32 @@
+#!/bin/busybox sh
+
+echo ""
+echo "======================================="
+echo "==  ZERO-OS UEFI BOOT RESCUE SYSTEM  =="
+echo "======================================="
+echo ""
+
+mount -t proc proc /proc
+mount -t sysfs sysfs /sys
+mount -t devtmpfs devtmpfs /dev
+
+mkdir -p /dev/pts
+mount -t devpts devpts /dev/pts
+mkdir -p /dev/mqueue
+mount -t mqueue mqueue /dev/mqueue
+
+mount -t efivarfs efivarfs /sys/firmware/efi/efivars
+
+echo "Waiting for devices..."
+udevd --daemon
+udevadm trigger
+udevadm settle
+
+echo "Applying changes to EFI Network Driver"
+efibootmgr --driver --reconnect --bootnum 0000
+
+echo "Modification applied, rebooting..."
+sync
+sleep 5
+
+echo b > /proc/sysrq-trigger
